@@ -140,9 +140,9 @@ def show_image(path: Path):
 if "stage" not in st.session_state:
     st.session_state.stage = 0
 
-# 自動捲動旗標：rerun 後捲到第二段輸入框
-if "scroll_to_draft2" not in st.session_state:
-    st.session_state.scroll_to_draft2 = False
+# ✅ rerun 後自動捲回頁面底部（維持「順順往下」的體感）
+if "scroll_to_bottom" not in st.session_state:
+    st.session_state.scroll_to_bottom = False
 
 # 防連點冷卻（避免 SMTP 被狂打）
 if "last_send_ts" not in st.session_state:
@@ -220,9 +220,9 @@ if st.session_state.stage >= 1:
                 st.write("如果你願意，再補一句。")
                 st.caption("（最後會只寄出一封信：包含你寫的所有內容。）")
 
-            # ✅ 切到第二段時，rerun 後自動捲到第二段輸入框
+            # ✅ 切到第二段：rerun 後維持在底端
             st.session_state.stage = 2
-            st.session_state.scroll_to_draft2 = True
+            st.session_state.scroll_to_bottom = True
             st.rerun()
 
 # --- 階段 2: 第二段 + 最終送出（只在此寄一次） ---
@@ -231,20 +231,6 @@ if st.session_state.stage >= 2:
         st.write("你剛剛的話，是你眼中的世界。")
         st.write("那「你眼中的你」是什麼？")
         st.caption("你可以補一句；也可以直接送出第一段。")
-
-    # ✅ anchor 放在第二段輸入框正上方，rerun 後捲到這裡
-    components.html('<div id="draft2-anchor"></div>', height=0)
-    if st.session_state.scroll_to_draft2:
-        components.html(
-            """
-            <script>
-              const el = window.parent.document.getElementById("draft2-anchor");
-              if (el) { el.scrollIntoView({behavior: "smooth", block: "center"}); }
-            </script>
-            """,
-            height=0,
-        )
-        st.session_state.scroll_to_draft2 = False
 
     draft2 = st.text_area(
         "第二段（選填）",
@@ -274,7 +260,7 @@ if st.session_state.stage >= 2:
         st.session_state.draft_email = ""
         st.session_state.draft_1 = ""
         st.session_state.draft_2 = ""
-        st.session_state.scroll_to_draft2 = False
+        st.session_state.scroll_to_bottom = False
         st.rerun()
 
     if send_btn:
@@ -318,3 +304,20 @@ if st.session_state.stage >= 2:
             else:
                 st.write("訊號好像稍微卡住了…")
                 st.caption("（不用擔心，你的內容已被保留，主辦人仍能在系統中取回。）")
+
+# ==========================================
+# 6. rerun 後捲到頁面底部（放在最底，確保真的到底）
+# ==========================================
+components.html('<div id="bottom-anchor"></div>', height=0)
+
+if st.session_state.scroll_to_bottom:
+    components.html(
+        """
+        <script>
+          const el = window.parent.document.getElementById("bottom-anchor");
+          if (el) { el.scrollIntoView({behavior: "instant", block: "end"}); }
+        </script>
+        """,
+        height=0,
+    )
+    st.session_state.scroll_to_bottom = False
