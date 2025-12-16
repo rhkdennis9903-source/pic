@@ -6,6 +6,7 @@ import uuid
 from email.message import EmailMessage
 from pathlib import Path
 from PIL import Image
+import streamlit.components.v1 as components
 
 # ==========================================
 # 1. 頁面設定與氛圍
@@ -20,18 +21,21 @@ st.markdown(
     """
 <style>
     .stApp { background-color: #2F5245; }
+
     h1, h2, h3, p, div, span, label, li {
         color: #F0F0F0 !important;
         font-family: "Microsoft JhengHei", sans-serif;
     }
+
     div[data-testid="stChatMessage"] { border-radius: 14px; }
+
     div[data-testid="stChatInput"] {
         background: rgba(0,0,0,0.25);
         border-radius: 14px;
     }
+
     div[data-testid="stTextInput"] label { color: #E89B3D !important; }
 
-    /* 小一點的按鈕間距 */
     div.stButton > button { border-radius: 14px; }
 </style>
 """,
@@ -136,6 +140,10 @@ def show_image(path: Path):
 if "stage" not in st.session_state:
     st.session_state.stage = 0
 
+# 自動捲動旗標：rerun 後捲到第二段輸入框
+if "scroll_to_draft2" not in st.session_state:
+    st.session_state.scroll_to_draft2 = False
+
 # 防連點冷卻（避免 SMTP 被狂打）
 if "last_send_ts" not in st.session_state:
     st.session_state.last_send_ts = 0.0
@@ -195,7 +203,6 @@ if st.session_state.stage >= 1:
         user_input_1 = st.chat_input("寫下你眼中的世界...", key="chat1")
 
         if user_input_1:
-            # bot → 忽略
             if st.session_state.get("hp_field"):
                 st.stop()
 
@@ -213,7 +220,9 @@ if st.session_state.stage >= 1:
                 st.write("如果你願意，再補一句。")
                 st.caption("（最後會只寄出一封信：包含你寫的所有內容。）")
 
+            # ✅ 切到第二段時，rerun 後自動捲到第二段輸入框
             st.session_state.stage = 2
+            st.session_state.scroll_to_draft2 = True
             st.rerun()
 
 # --- 階段 2: 第二段 + 最終送出（只在此寄一次） ---
@@ -223,7 +232,20 @@ if st.session_state.stage >= 2:
         st.write("那「你眼中的你」是什麼？")
         st.caption("你可以補一句；也可以直接送出第一段。")
 
-    # 第二段用一般輸入（避免 chat_input 一送就寄）
+    # ✅ anchor 放在第二段輸入框正上方，rerun 後捲到這裡
+    components.html('<div id="draft2-anchor"></div>', height=0)
+    if st.session_state.scroll_to_draft2:
+        components.html(
+            """
+            <script>
+              const el = window.parent.document.getElementById("draft2-anchor");
+              if (el) { el.scrollIntoView({behavior: "smooth", block: "center"}); }
+            </script>
+            """,
+            height=0,
+        )
+        st.session_state.scroll_to_draft2 = False
+
     draft2 = st.text_area(
         "第二段（選填）",
         value=st.session_state.draft_2,
@@ -233,7 +255,6 @@ if st.session_state.stage >= 2:
     )
     st.session_state.draft_2 = (draft2 or "").strip()
 
-    # 預覽（讓觀眾知道最後會寄出什麼）
     with st.expander("預覽你要送出的內容", expanded=False):
         st.markdown("**【第一段】**")
         st.write(st.session_state.draft_1 or "")
@@ -253,6 +274,7 @@ if st.session_state.stage >= 2:
         st.session_state.draft_email = ""
         st.session_state.draft_1 = ""
         st.session_state.draft_2 = ""
+        st.session_state.scroll_to_draft2 = False
         st.rerun()
 
     if send_btn:
@@ -268,7 +290,7 @@ if st.session_state.stage >= 2:
         name = st.session_state.draft_name or "匿名訪客"
         email = st.session_state.draft_email or ""
 
-        payload = f"【第一段】\n{st.session_state.draft_1}".strip()
+        payload = f"【第一段】\n{(st.session_state.draft_1 or '').strip()}".strip()
         if st.session_state.draft_2:
             payload += f"\n\n【第二段】\n{st.session_state.draft_2}".strip()
 
