@@ -10,7 +10,11 @@ from PIL import Image
 # ==========================================
 # 1. 頁面設定與氛圍
 # ==========================================
-st.set_page_config(page_title="牠眼中的他眼中的牠", page_icon="🐈")
+st.set_page_config(
+    page_title="牠眼中的他眼中的牠",
+    page_icon="🐈",
+    initial_sidebar_state="collapsed",
+)
 
 st.markdown(
     """
@@ -48,10 +52,17 @@ IMG_DIR = APP_DIR / "images"
 FALLBACK_DIR = APP_DIR / "fallback_messages"
 FALLBACK_DIR.mkdir(exist_ok=True)
 
-EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+\.[^@\s]+$|^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 # ==========================================
-# 2. 寄信功能（穩定版 + 防重送 + 保底存檔）
+# 2. Honeypot（移到 Sidebar，避免出現在主畫面）
+# ==========================================
+with st.sidebar:
+    # 觀眾正常情況不會打開側欄；機器人常會掃到並填值
+    st.text_input("bot_trap", key="hp_field", label_visibility="collapsed")
+
+# ==========================================
+# 3. 寄信功能（穩定版 + 防重送 + 保底存檔）
 # ==========================================
 def _sanitize_single_line(s: str) -> str:
     """防止 header injection：去掉換行"""
@@ -65,7 +76,8 @@ def _is_valid_email(email: str) -> bool:
     email = email.strip()
     if len(email) > 254:
         return False
-    return bool(EMAIL_RE.match(email))
+    # 基本檢核：足夠擋掉明顯錯誤
+    return bool(re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email))
 
 def _fallback_save(display_name: str, email: str, user_message: str) -> str:
     ts = time.strftime("%Y%m%d-%H%M%S")
@@ -136,7 +148,7 @@ def show_image(path: Path):
         st.warning(f"⚠️ 找不到圖片：{path.as_posix()}")
 
 # ==========================================
-# 3. 互動內容
+# 4. 互動內容
 # ==========================================
 st.title("🐈 牠眼中的他眼中的牠")
 st.caption("生活在他方 | 夜貓店 1/1 - 1/31")
@@ -192,9 +204,6 @@ if st.session_state.stage >= 1:
             visitor_name = st.text_input("你的稱呼 (例如：夜貓常客)", key="v_name")
         with col2:
             visitor_email = st.text_input("你的信箱 (選填，寄備份用)", key="v_email")
-
-        # ✅ 蜜罐：完全隱藏（觀眾看不到）
-        st.text_input("bot_trap", key="hp_field", label_visibility="collapsed")
 
     # 只在 stage 1 接第一段輸入
     if st.session_state.stage == 1:
@@ -269,6 +278,10 @@ if st.session_state.stage >= 2:
     followup = st.chat_input("再補一句（寫完就送出）", key="chat2")
 
     if followup:
+        # honeypot 有值 → 直接忽略（擋 bot）
+        if st.session_state.get("hp_field"):
+            st.stop()
+
         final_name = st.session_state.first_name or "匿名訪客"
         final_email = st.session_state.first_email or ""
         first_msg = st.session_state.first_message or ""
