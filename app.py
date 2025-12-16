@@ -140,7 +140,7 @@ def show_image(path: Path):
 if "stage" not in st.session_state:
     st.session_state.stage = 0
 
-# ✅ rerun 後自動捲回頁面底部（維持「順順往下」的體感）
+# ✅ rerun 後自動捲回頁面底部（只在 stage2 需要）
 if "scroll_to_bottom" not in st.session_state:
     st.session_state.scroll_to_bottom = False
 
@@ -180,6 +180,8 @@ with st.chat_message("assistant", avatar="🐈"):
 
 if st.session_state.stage == 0:
     if st.button("繼續走入畫中...", type="primary"):
+        # ✅ 這一步不該捲到底（避免跳過 stage1 文字與海報）
+        st.session_state.scroll_to_bottom = False
         st.session_state.stage = 1
         st.rerun()
 
@@ -220,7 +222,7 @@ if st.session_state.stage >= 1:
                 st.write("如果你願意，再補一句。")
                 st.caption("（最後會只寄出一封信：包含你寫的所有內容。）")
 
-            # ✅ 切到第二段：rerun 後維持在底端
+            # ✅ 進入第二段：rerun 後維持在底端
             st.session_state.stage = 2
             st.session_state.scroll_to_bottom = True
             st.rerun()
@@ -306,11 +308,11 @@ if st.session_state.stage >= 2:
                 st.caption("（不用擔心，你的內容已被保留，主辦人仍能在系統中取回。）")
 
 # ==========================================
-# 6. rerun 後捲到頁面底部（放在最底，確保真的到底）
+# 6. rerun 後捲到頁面底部（放在最底，且只允許 stage2 觸發）
 # ==========================================
 components.html('<div id="bottom-anchor"></div>', height=0)
 
-if st.session_state.scroll_to_bottom:
+if st.session_state.scroll_to_bottom and st.session_state.stage >= 2:
     components.html(
         """
         <script>
