@@ -15,8 +15,9 @@ st.set_page_config(page_title="牠眼中的他眼中的牠", page_icon="🐈")
 st.markdown(
     """
 <style>
-    .stApp { background-color: #2F5245; }
-
+    .stApp {
+        background-color: #2F5245;
+    }
     h1, h2, h3, p, div, span, label, li {
         color: #F0F0F0 !important;
         font-family: "Microsoft JhengHei", sans-serif;
@@ -192,14 +193,15 @@ if st.session_state.stage >= 1:
         with col2:
             visitor_email = st.text_input("你的信箱 (選填，寄備份用)", key="v_email")
 
-        # 蜜罐：人不會填，機器人可能會填
-        _ = st.text_input("（請留空）", key="hp_field", help="")
+        # ✅ 蜜罐：完全隱藏（觀眾看不到）
+        st.text_input("bot_trap", key="hp_field", label_visibility="collapsed")
 
     # 只在 stage 1 接第一段輸入
     if st.session_state.stage == 1:
         user_input_1 = st.chat_input("寫下你眼中的世界...", key="chat1")
 
         if user_input_1:
+            # honeypot 有值 → 直接忽略（擋 bot）
             if st.session_state.get("hp_field"):
                 st.stop()
 
@@ -271,7 +273,6 @@ if st.session_state.stage >= 2:
         final_email = st.session_state.first_email or ""
         first_msg = st.session_state.first_message or ""
 
-        # 合併寄出（同一封：第一段 + 第二段）
         merged = f"【第一段】\n{first_msg}\n\n【第二段】\n{followup}"
 
         msg_id2 = uuid.uuid5(
