@@ -22,15 +22,24 @@ st.markdown(
 <style>
     .stApp { background-color: #2F5245; }
 
-    h1, h2, h3, p, div, span, label, li {
+    h1, h2, p, div, span, label, li {
         color: #F0F0F0 !important;
         font-family: "Microsoft JhengHei", sans-serif;
+    }
+    
+    /* 專門設定 h3 (角色名字) 的樣式：橘金色、字體加大 */
+    h3 {
+        color: #E89B3D !important;
+        font-family: "Microsoft JhengHei", sans-serif;
+        font-size: 1.3rem !important;
+        margin-bottom: 0.5rem !important;
+        padding-top: 0.5rem !important;
     }
 
     /* 調整對話文字行距 */
     div[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] p {
-        line-height: 1.6;
-        margin-bottom: 0px; 
+        line-height: 1.7;
+        margin-bottom: 2px; 
     }
 
     div[data-testid="stChatInput"] {
@@ -93,7 +102,7 @@ def show_image(path: Path):
 # 4. 狀態管理
 # ==========================================
 if "stage" not in st.session_state: st.session_state.stage = 0
-if "scroll_to_bottom" not in st.session_state: st.session_state.scroll_to_bottom = False
+if "scroll_target" not in st.session_state: st.session_state.scroll_target = None  # 用來控制捲動目標
 if "draft_name" not in st.session_state: st.session_state.draft_name = ""
 if "draft_email" not in st.session_state: st.session_state.draft_email = ""
 if "draft_1" not in st.session_state: st.session_state.draft_1 = ""
@@ -107,8 +116,7 @@ st.caption("生活在他方｜夜貓店 Elsewhere Cafe | 2026/1/1 - 1/31")
 
 # --- 階段 0: 花娜說 ---
 with st.chat_message("assistant", avatar="🐱"):
-    # 這裡明確寫出名字與動詞
-    st.markdown("**三花貓 花娜 說：**")
+    st.markdown("### 三花貓 花娜 說：")
     
     st.write("你看見我了嗎？")
     st.write("我是被凝視的「牠」，")
@@ -123,13 +131,16 @@ with st.chat_message("assistant", avatar="🐱"):
 if st.session_state.stage == 0:
     if st.button("繼續走入畫中...", type="primary"):
         st.session_state.stage = 1
+        st.session_state.scroll_target = "puff-start" # 設定捲動目標
         st.rerun()
 
 # --- 階段 1: 泡芙說 ---
 if st.session_state.stage >= 1:
+    # 埋設錨點：泡芙開始說話的地方
+    st.markdown('<div id="puff-start"></div>', unsafe_allow_html=True)
+    
     with st.chat_message("assistant", avatar="🐱"):
-        # 這裡明確寫出名字與動詞
-        st.markdown("**橘白貓 泡芙 說：**")
+        st.markdown("### 橘白貓 泡芙 說：")
         
         st.write("他眼中有我，")
         st.write("我眼中有橘子，")
@@ -162,7 +173,7 @@ if st.session_state.stage >= 1:
             st.session_state.draft_email = (visitor_email or "").strip()
             st.session_state.draft_1 = user_input_1.strip()
             st.session_state.stage = 2
-            st.session_state.scroll_to_bottom = True
+            st.session_state.scroll_target = "hana-end" # 捲動到底部
             st.rerun()
 
 # --- 階段 2: 花娜再說 ---
@@ -172,7 +183,7 @@ if st.session_state.stage >= 2:
         st.write(st.session_state.draft_1)
 
     with st.chat_message("assistant", avatar="🐱"):
-        st.markdown("**三花貓 花娜 說：**")
+        st.markdown("### 三花貓 花娜 說：")
         st.write("你剛剛的話，")
         st.write("是你眼中的世界。")
         st.write(" ")
@@ -192,7 +203,7 @@ if st.session_state.stage >= 2:
                 payload += f"\n\n【第二段】\n{st.session_state.draft_2}"
             
             with st.chat_message("assistant", avatar="🐱"):
-                st.markdown("**橘白貓 泡芙 說：**")
+                st.markdown("### 橘白貓 泡芙 說：")
                 with st.spinner("正在傳遞視角..."):
                     ok = send_email(st.session_state.draft_name, st.session_state.draft_email, payload)
                 if ok:
@@ -206,17 +217,27 @@ if st.session_state.stage >= 2:
         if st.button("重新開始"):
             for key in ["stage", "draft_name", "draft_email", "draft_1", "draft_2"]:
                 st.session_state[key] = 0 if key=="stage" else ""
+            st.session_state.scroll_target = None
             st.rerun()
 
 # ==========================================
-# 6. 自動捲動
+# 6. 智慧捲動控制
 # ==========================================
-components.html('<div id="bottom-anchor"></div>', height=0)
-if st.session_state.scroll_to_bottom:
-    components.html("""
+# 頁尾錨點
+st.markdown('<div id="hana-end"></div>', unsafe_allow_html=True)
+
+if st.session_state.scroll_target:
+    target_id = st.session_state.scroll_target
+    components.html(
+        f"""
         <script>
-          const el = window.parent.document.getElementById("bottom-anchor");
-          if (el) { el.scrollIntoView({behavior: "instant", block: "end"}); }
+            const target = window.parent.document.getElementById("{target_id}");
+            if (target) {{
+                target.scrollIntoView({{ behavior: "smooth", block: "start" }});
+            }}
         </script>
-        """, height=0)
-    st.session_state.scroll_to_bottom = False
+        """,
+        height=0,
+    )
+    # 捲動後重置，避免這段 script 每次 rerun 都執行
+    st.session_state.scroll_target = None
