@@ -27,7 +27,10 @@ st.markdown(
         font-family: "Microsoft JhengHei", sans-serif;
     }
 
-    div[data-testid="stChatMessage"] { border-radius: 14px; }
+    /* 強化對話框標題的顯示 */
+    div[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] {
+        line-height: 1.8;
+    }
 
     div[data-testid="stChatInput"] {
         background: rgba(0,0,0,0.25);
@@ -35,7 +38,6 @@ st.markdown(
     }
 
     div[data-testid="stTextInput"] label { color: #E89B3D !important; }
-
     div.stButton > button { border-radius: 14px; }
 </style>
 """,
@@ -48,13 +50,7 @@ FALLBACK_DIR = APP_DIR / "fallback_messages"
 FALLBACK_DIR.mkdir(exist_ok=True)
 
 # ==========================================
-# 2. Honeypot
-# ==========================================
-with st.sidebar:
-    st.text_input("bot_trap", key="hp_field", label_visibility="collapsed")
-
-# ==========================================
-# 3. 寄信功能
+# 3. 功能函式
 # ==========================================
 def _is_valid_email(email: str) -> bool:
     if not email: return False
@@ -109,8 +105,8 @@ st.title("🐱 牠眼中的 他眼中的牠")
 st.caption("生活在他方｜夜貓店 Elsewhere Cafe | 2026/1/1 - 1/31")
 
 # --- 階段 0: 花娜說 ---
-with st.chat_message("assistant", avatar="🐱"):
-    st.markdown("### 三花貓 花娜 說：")
+# 直接在 chat_message 的第一個參數加上 "說："
+with st.chat_message("三花貓 花娜 說：", avatar="🐱"):
     st.write("你看見我了嗎？")
     st.write("我是被凝視的「牠」，")
     st.write("也是凝視著你的「牠」。")
@@ -119,7 +115,7 @@ with st.chat_message("assistant", avatar="🐱"):
     
     st.write("奈可可 用畫筆記下了這個瞬間。")
     st.write("在這個空間裡，")
-    st.write("我們是怎麼互相觀觀看的？")
+    st.write("我們是怎麼互相觀看的？")
 
 if st.session_state.stage == 0:
     if st.button("繼續走入畫中...", type="primary"):
@@ -128,8 +124,7 @@ if st.session_state.stage == 0:
 
 # --- 階段 1: 泡芙說 ---
 if st.session_state.stage >= 1:
-    with st.chat_message("assistant", avatar="🐱"):
-        st.markdown("### 橘白貓 泡芙 說：")
+    with st.chat_message("橘白貓 泡芙 說：", avatar="🐱"):
         st.write("他眼中有我，")
         st.write("我眼中有橘子，")
         st.write("那你眼中看到了什麼？")
@@ -157,7 +152,6 @@ if st.session_state.stage >= 1:
     if st.session_state.stage == 1:
         user_input_1 = st.chat_input("寫下你眼中的世界...", key="chat1")
         if user_input_1:
-            if st.session_state.get("hp_field"): st.stop()
             st.session_state.draft_name = visitor_name.strip() if visitor_name else "匿名訪客"
             st.session_state.draft_email = (visitor_email or "").strip()
             st.session_state.draft_1 = user_input_1.strip()
@@ -171,8 +165,7 @@ if st.session_state.stage >= 2:
         st.write(f"我是 {st.session_state.draft_name}：")
         st.write(st.session_state.draft_1)
 
-    with st.chat_message("assistant", avatar="🐱"):
-        st.markdown("### 三花貓 花娜 說：")
+    with st.chat_message("三花貓 花娜 說：", avatar="🐱"):
         st.write("你剛剛的話，")
         st.write("是你眼中的世界。")
         st.write(" ")
@@ -187,13 +180,11 @@ if st.session_state.stage >= 2:
     colA, colB = st.columns([1, 1])
     with colA:
         if st.button("送出給 奈可可", type="primary"):
-            if st.session_state.get("hp_field"): st.stop()
             payload = f"【第一段】\n{st.session_state.draft_1}"
             if st.session_state.draft_2:
                 payload += f"\n\n【第二段】\n{st.session_state.draft_2}"
             
-            with st.chat_message("assistant", avatar="🐱"):
-                st.markdown("### 橘白貓 泡芙 說：")
+            with st.chat_message("橘白貓 泡芙 說：", avatar="🐱"):
                 with st.spinner("正在傳遞視角..."):
                     ok = send_email(st.session_state.draft_name, st.session_state.draft_email, payload)
                 if ok:
