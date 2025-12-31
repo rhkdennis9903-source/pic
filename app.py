@@ -27,9 +27,10 @@ st.markdown(
         font-family: "Microsoft JhengHei", sans-serif;
     }
 
-    /* 強化對話框標題的顯示 */
-    div[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] {
-        line-height: 1.8;
+    /* 調整對話文字行距 */
+    div[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] p {
+        line-height: 1.6;
+        margin-bottom: 0px; 
     }
 
     div[data-testid="stChatInput"] {
@@ -105,8 +106,10 @@ st.title("🐱 牠眼中的 他眼中的牠")
 st.caption("生活在他方｜夜貓店 Elsewhere Cafe | 2026/1/1 - 1/31")
 
 # --- 階段 0: 花娜說 ---
-# 直接在 chat_message 的第一個參數加上 "說："
-with st.chat_message("三花貓 花娜 說：", avatar="🐱"):
+with st.chat_message("assistant", avatar="🐱"):
+    # 這裡明確寫出名字與動詞
+    st.markdown("**三花貓 花娜 說：**")
+    
     st.write("你看見我了嗎？")
     st.write("我是被凝視的「牠」，")
     st.write("也是凝視著你的「牠」。")
@@ -124,7 +127,10 @@ if st.session_state.stage == 0:
 
 # --- 階段 1: 泡芙說 ---
 if st.session_state.stage >= 1:
-    with st.chat_message("橘白貓 泡芙 說：", avatar="🐱"):
+    with st.chat_message("assistant", avatar="🐱"):
+        # 這裡明確寫出名字與動詞
+        st.markdown("**橘白貓 泡芙 說：**")
+        
         st.write("他眼中有我，")
         st.write("我眼中有橘子，")
         st.write("那你眼中看到了什麼？")
@@ -165,7 +171,8 @@ if st.session_state.stage >= 2:
         st.write(f"我是 {st.session_state.draft_name}：")
         st.write(st.session_state.draft_1)
 
-    with st.chat_message("三花貓 花娜 說：", avatar="🐱"):
+    with st.chat_message("assistant", avatar="🐱"):
+        st.markdown("**三花貓 花娜 說：**")
         st.write("你剛剛的話，")
         st.write("是你眼中的世界。")
         st.write(" ")
@@ -184,7 +191,8 @@ if st.session_state.stage >= 2:
             if st.session_state.draft_2:
                 payload += f"\n\n【第二段】\n{st.session_state.draft_2}"
             
-            with st.chat_message("橘白貓 泡芙 說：", avatar="🐱"):
+            with st.chat_message("assistant", avatar="🐱"):
+                st.markdown("**橘白貓 泡芙 說：**")
                 with st.spinner("正在傳遞視角..."):
                     ok = send_email(st.session_state.draft_name, st.session_state.draft_email, payload)
                 if ok:
