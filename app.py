@@ -27,7 +27,7 @@ st.markdown(
         font-family: "Microsoft JhengHei", sans-serif;
     }
     
-    /* 角色名字標題：橘金色 */
+    /* 橘金色角色名字 */
     h3 {
         color: #E89B3D !important;
         font-family: "Microsoft JhengHei", sans-serif;
@@ -55,9 +55,11 @@ st.markdown(
 
 APP_DIR = Path(__file__).parent
 IMG_DIR = APP_DIR / "images"
+FALLBACK_DIR = APP_DIR / "fallback_messages"
+FALLBACK_DIR.mkdir(exist_ok=True)
 
 # ==========================================
-# 3. 功能函式 (核心邏輯維持不變)
+# 3. 功能函式
 # ==========================================
 def _is_valid_email(email: str) -> bool:
     if not email: return False
@@ -106,12 +108,12 @@ if "draft_1" not in st.session_state: st.session_state.draft_1 = ""
 if "draft_2" not in st.session_state: st.session_state.draft_2 = ""
 
 # ==========================================
-# 5. UI 流程 (角色對調版)
+# 5. UI 流程
 # ==========================================
 st.title("🐱 牠眼中的 他眼中的牠")
 st.caption("生活在他方｜夜貓店 Elsewhere Cafe | 2026/1/1 - 1/31")
 
-# --- 階段 0: 泡芙開場 (文學感) ---
+# --- 階段 0: 泡芙開場 (橘白貓) ---
 with st.chat_message("assistant", avatar="🐱"):
     st.markdown("### 橘白貓 泡芙 說道：")
     st.write("你看見我了嗎？")
@@ -125,10 +127,11 @@ with st.chat_message("assistant", avatar="🐱"):
 if st.session_state.stage == 0:
     if st.button("繼續走入畫中...", type="primary"):
         st.session_state.stage = 1
+        # ✅ 指向 Hana (三花) 的開頭
         st.session_state.scroll_target = "hana-start"
         st.rerun()
 
-# --- 階段 1: 三花 花娜 邀請 (直白互動) ---
+# --- 階段 1: 花娜邀請 (三花貓 - 頭上有橘子) ---
 if st.session_state.stage >= 1:
     st.markdown('<div id="hana-start" style="padding-top: 20px;"></div>', unsafe_allow_html=True)
     with st.chat_message("assistant", avatar="🐱"):
@@ -162,10 +165,11 @@ if st.session_state.stage >= 1:
             st.session_state.draft_email = (visitor_email or "").strip()
             st.session_state.draft_1 = user_input_1.strip()
             st.session_state.stage = 2
+            # ✅ 指向泡芙 (橘白) 的結尾
             st.session_state.scroll_target = "puff-end"
             st.rerun()
 
-# --- 階段 2: 泡芙再說 (輕聲感性) ---
+# --- 階段 2: 泡芙結尾 ---
 if st.session_state.stage >= 2:
     with st.chat_message("user"):
         st.write(f"我是 {st.session_state.draft_name}：")
@@ -192,6 +196,7 @@ if st.session_state.stage >= 2:
                 payload += f"\n\n【第二段】\n{st.session_state.draft_2}"
             
             with st.chat_message("assistant", avatar="🐱"):
+                # ✅ 最後送出由花娜確認
                 st.markdown("### 三花貓 花娜 說：")
                 with st.spinner("正在傳遞視角..."):
                     ok = send_email(st.session_state.draft_name, st.session_state.draft_email, payload)
