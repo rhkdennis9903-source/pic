@@ -102,7 +102,7 @@ def show_image(path: Path):
 # 4. 狀態管理
 # ==========================================
 if "stage" not in st.session_state: st.session_state.stage = 0
-if "scroll_target" not in st.session_state: st.session_state.scroll_target = None  # 用來控制捲動目標
+if "scroll_target" not in st.session_state: st.session_state.scroll_target = None
 if "draft_name" not in st.session_state: st.session_state.draft_name = ""
 if "draft_email" not in st.session_state: st.session_state.draft_email = ""
 if "draft_1" not in st.session_state: st.session_state.draft_1 = ""
@@ -131,13 +131,13 @@ with st.chat_message("assistant", avatar="🐱"):
 if st.session_state.stage == 0:
     if st.button("繼續走入畫中...", type="primary"):
         st.session_state.stage = 1
-        st.session_state.scroll_target = "puff-start" # 設定捲動目標
+        st.session_state.scroll_target = "puff-start"
         st.rerun()
 
 # --- 階段 1: 泡芙說 ---
 if st.session_state.stage >= 1:
-    # 埋設錨點：泡芙開始說話的地方
-    st.markdown('<div id="puff-start"></div>', unsafe_allow_html=True)
+    # 這裡埋設錨點 id="puff-start"
+    st.markdown('<div id="puff-start" style="padding-top: 20px;"></div>', unsafe_allow_html=True)
     
     with st.chat_message("assistant", avatar="🐱"):
         st.markdown("### 橘白貓 泡芙 說：")
@@ -173,7 +173,7 @@ if st.session_state.stage >= 1:
             st.session_state.draft_email = (visitor_email or "").strip()
             st.session_state.draft_1 = user_input_1.strip()
             st.session_state.stage = 2
-            st.session_state.scroll_target = "hana-end" # 捲動到底部
+            st.session_state.scroll_target = "hana-end"
             st.rerun()
 
 # --- 階段 2: 花娜再說 ---
@@ -221,23 +221,23 @@ if st.session_state.stage >= 2:
             st.rerun()
 
 # ==========================================
-# 6. 智慧捲動控制
+# 6. 智慧捲動控制 (關鍵修改：加入 setTimeout)
 # ==========================================
-# 頁尾錨點
 st.markdown('<div id="hana-end"></div>', unsafe_allow_html=True)
 
 if st.session_state.scroll_target:
     target_id = st.session_state.scroll_target
-    components.html(
-        f"""
+    # 這裡的 setTimeout 是關鍵，延遲 350 毫秒執行捲動
+    # 讓 Streamlit 先完成它的自動排版，我們再強制捲到指定位置
+    js_code = f"""
         <script>
-            const target = window.parent.document.getElementById("{target_id}");
-            if (target) {{
-                target.scrollIntoView({{ behavior: "smooth", block: "start" }});
-            }}
+            setTimeout(function() {{
+                const target = window.parent.document.getElementById("{target_id}");
+                if (target) {{
+                    target.scrollIntoView({{ behavior: "smooth", block: "start" }});
+                }}
+            }}, 350);
         </script>
-        """,
-        height=0,
-    )
-    # 捲動後重置，避免這段 script 每次 rerun 都執行
+    """
+    components.html(js_code, height=0)
     st.session_state.scroll_target = None
