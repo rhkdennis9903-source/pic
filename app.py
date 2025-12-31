@@ -27,7 +27,7 @@ st.markdown(
         font-family: "Microsoft JhengHei", sans-serif;
     }
     
-    /* 專門設定 h3 (角色名字) 的樣式：橘金色、字體加大 */
+    /* 角色名字標題：橘金色 */
     h3 {
         color: #E89B3D !important;
         font-family: "Microsoft JhengHei", sans-serif;
@@ -36,7 +36,6 @@ st.markdown(
         padding-top: 0.5rem !important;
     }
 
-    /* 調整對話文字行距 */
     div[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] p {
         line-height: 1.7;
         margin-bottom: 2px; 
@@ -56,11 +55,9 @@ st.markdown(
 
 APP_DIR = Path(__file__).parent
 IMG_DIR = APP_DIR / "images"
-FALLBACK_DIR = APP_DIR / "fallback_messages"
-FALLBACK_DIR.mkdir(exist_ok=True)
 
 # ==========================================
-# 3. 功能函式
+# 3. 功能函式 (核心邏輯維持不變)
 # ==========================================
 def _is_valid_email(email: str) -> bool:
     if not email: return False
@@ -109,21 +106,18 @@ if "draft_1" not in st.session_state: st.session_state.draft_1 = ""
 if "draft_2" not in st.session_state: st.session_state.draft_2 = ""
 
 # ==========================================
-# 5. UI 流程
+# 5. UI 流程 (角色對調版)
 # ==========================================
 st.title("🐱 牠眼中的 他眼中的牠")
 st.caption("生活在他方｜夜貓店 Elsewhere Cafe | 2026/1/1 - 1/31")
 
-# --- 階段 0: 花娜說 ---
+# --- 階段 0: 泡芙開場 (文學感) ---
 with st.chat_message("assistant", avatar="🐱"):
-    st.markdown("### 三花貓 花娜 說：")
-    
+    st.markdown("### 橘白貓 泡芙 說道：")
     st.write("你看見我了嗎？")
     st.write("我是被凝視的「牠」，")
     st.write("也是凝視著你的「牠」。")
-    
     show_image(IMG_DIR / "poster_vertical.jpg")
-    
     st.write("奈可可 用畫筆記下了這個瞬間。")
     st.write("在這個空間裡，")
     st.write("我們是怎麼互相觀看的？")
@@ -131,24 +125,19 @@ with st.chat_message("assistant", avatar="🐱"):
 if st.session_state.stage == 0:
     if st.button("繼續走入畫中...", type="primary"):
         st.session_state.stage = 1
-        st.session_state.scroll_target = "puff-start"
+        st.session_state.scroll_target = "hana-start"
         st.rerun()
 
-# --- 階段 1: 泡芙說 ---
+# --- 階段 1: 三花 花娜 邀請 (直白互動) ---
 if st.session_state.stage >= 1:
-    # 這裡埋設錨點 id="puff-start"
-    st.markdown('<div id="puff-start" style="padding-top: 20px;"></div>', unsafe_allow_html=True)
-    
+    st.markdown('<div id="hana-start" style="padding-top: 20px;"></div>', unsafe_allow_html=True)
     with st.chat_message("assistant", avatar="🐱"):
-        st.markdown("### 橘白貓 泡芙 說：")
-        
+        st.markdown("### 三花貓 花娜 說：")
         st.write("他眼中有我，")
         st.write("我眼中有橘子，")
         st.write("那你眼中看到了什麼？")
-        
         show_image(IMG_DIR / "poster_horizontal.jpg")
         st.markdown("---")
-        
         st.write("我想幫你把這份視角，傳遞給奈可可。")
         st.write(" ")
         st.write("若是願意，請留下你的稱呼；")
@@ -173,17 +162,17 @@ if st.session_state.stage >= 1:
             st.session_state.draft_email = (visitor_email or "").strip()
             st.session_state.draft_1 = user_input_1.strip()
             st.session_state.stage = 2
-            st.session_state.scroll_target = "hana-end"
+            st.session_state.scroll_target = "puff-end"
             st.rerun()
 
-# --- 階段 2: 花娜再說 ---
+# --- 階段 2: 泡芙再說 (輕聲感性) ---
 if st.session_state.stage >= 2:
     with st.chat_message("user"):
         st.write(f"我是 {st.session_state.draft_name}：")
         st.write(st.session_state.draft_1)
 
     with st.chat_message("assistant", avatar="🐱"):
-        st.markdown("### 三花貓 花娜 說：")
+        st.markdown("### 橘白貓 泡芙 輕聲說道：")
         st.write("你剛剛的話，")
         st.write("是你眼中的世界。")
         st.write(" ")
@@ -203,7 +192,7 @@ if st.session_state.stage >= 2:
                 payload += f"\n\n【第二段】\n{st.session_state.draft_2}"
             
             with st.chat_message("assistant", avatar="🐱"):
-                st.markdown("### 橘白貓 泡芙 說：")
+                st.markdown("### 三花貓 花娜 說：")
                 with st.spinner("正在傳遞視角..."):
                     ok = send_email(st.session_state.draft_name, st.session_state.draft_email, payload)
                 if ok:
@@ -221,14 +210,12 @@ if st.session_state.stage >= 2:
             st.rerun()
 
 # ==========================================
-# 6. 智慧捲動控制 (關鍵修改：加入 setTimeout)
+# 6. 智慧捲動控制
 # ==========================================
-st.markdown('<div id="hana-end"></div>', unsafe_allow_html=True)
+st.markdown('<div id="puff-end"></div>', unsafe_allow_html=True)
 
 if st.session_state.scroll_target:
     target_id = st.session_state.scroll_target
-    # 這裡的 setTimeout 是關鍵，延遲 350 毫秒執行捲動
-    # 讓 Streamlit 先完成它的自動排版，我們再強制捲到指定位置
     js_code = f"""
         <script>
             setTimeout(function() {{
