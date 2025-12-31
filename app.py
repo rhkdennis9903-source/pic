@@ -12,8 +12,8 @@ import streamlit.components.v1 as components
 # 1. 頁面設定與氛圍
 # ==========================================
 st.set_page_config(
-    page_title="牠眼中的他眼中的牠",
-    page_icon="🐈",
+    page_title="牠眼中的 他眼中的牠",
+    page_icon="🐱",
     initial_sidebar_state="collapsed",
 )
 
@@ -103,9 +103,9 @@ def send_email(display_name: str, email: str, payload: str) -> bool:
         msg["Reply-To"] = email
         recipients.append(email)
 
-    body = f"""Naicoco 您好，
+    body = f"""奈可可 您好，
 
-在「牠眼中的他眼中的牠」展覽現場，
+在「牠眼中的 他眼中的牠」展覽現場，
 {display_name} ({email if email else "未留信箱"}) 留下了這段話：
 
 ---------------------------
@@ -167,15 +167,15 @@ COOLDOWN_SECONDS = 8
 # ==========================================
 # 5. UI
 # ==========================================
-st.title("🐈 牠眼中的他眼中的牠")
-st.caption("生活在他方 | 夜貓店 1/1 - 1/31")
+st.title("🐱 牠眼中的 他眼中的牠")
+st.caption("生活在他方｜夜貓店 Elsewhere Cafe | 2026/1/1 - 1/31")
 
 # --- 階段 0: 凝視 ---
-with st.chat_message("assistant", avatar="🐈"):
+with st.chat_message("assistant", avatar="🐱"):
     st.write("你看見我了嗎？")
     st.write("我是被凝視的「牠」，也是凝視著你的「牠」。")
     show_image(IMG_DIR / "poster_vertical.jpg")
-    st.write("naicoco 用畫筆記下了這個瞬間。")
+    st.write("奈可可 用畫筆記下了這個瞬間。")
     st.write("在這個空間裡，我們是怎麼互相觀看的？")
 
 if st.session_state.stage == 0:
@@ -191,8 +191,14 @@ if st.session_state.stage >= 1:
         st.write("他眼中有我，我眼中有橘子，那你眼中看到了什麼？")
         show_image(IMG_DIR / "poster_horizontal.jpg")
         st.markdown("---")
-        st.write("我想幫你把這份視角，傳遞給 naicoco。")
-        st.write("若是願意，請留下你的稱呼；若想收到這封信的備份（或期待回信），也可以留下信箱。")
+        st.write("我想幫你把這份視角，傳遞給奈可可。")
+        
+        st.markdown("""
+        若是願意，請留下你的稱呼；  
+        若想收到這封信的備份（或期待回信），也可以留下信箱。
+        
+        **展覽結束後會在所有留言裡隨機抽出三位，可以獲得奈可可親筆創作小禮🎁。**
+        """)
 
     with st.container():
         col1, col2 = st.columns(2)
@@ -229,7 +235,7 @@ if st.session_state.stage >= 1:
 
 # --- 階段 2: 第二段 + 最終送出（只在此寄一次） ---
 if st.session_state.stage >= 2:
-    with st.chat_message("assistant", avatar="🐈"):
+    with st.chat_message("assistant", avatar="🐱"):
         st.write("你剛剛的話，是你眼中的世界。")
         st.write("那「你眼中的你」是什麼？")
         st.caption("你可以補一句；也可以直接送出第一段。")
@@ -252,7 +258,7 @@ if st.session_state.stage >= 2:
 
     colA, colB = st.columns([1, 1])
     with colA:
-        send_btn = st.button("送出給 naicoco", type="primary")
+        send_btn = st.button("送出給 奈可可", type="primary")
     with colB:
         reset_btn = st.button("重新開始")
 
@@ -285,7 +291,7 @@ if st.session_state.stage >= 2:
         payload_id = uuid.uuid5(uuid.NAMESPACE_DNS, f"{name}|{email}|{payload}").hex
         if payload_id in st.session_state.sent_payload_ids:
             with st.chat_message("assistant", avatar="🍊"):
-                st.write("這份內容我已經送過了。謝謝你。🐈")
+                st.write("這份內容我已經送過了。謝謝你。🐱")
             st.stop()
 
         with st.chat_message("assistant", avatar="🍊"):
@@ -301,7 +307,7 @@ if st.session_state.stage >= 2:
                     st.caption(f"（備份信件已同步寄至：{email}，若沒收到請檢查垃圾信箱）")
                 elif email:
                     st.caption("（你留的信箱格式看起來不太像 email，所以我沒有寄副本；但主辦人已收到你的視角。）")
-                st.write("謝謝你成為這場凝視的一部分。🐈")
+                st.write("謝謝你成為這場凝視的一部分。🐱")
                 st.balloons()
             else:
                 st.write("訊號好像稍微卡住了…")
